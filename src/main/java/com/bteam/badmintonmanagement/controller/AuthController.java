@@ -1,15 +1,16 @@
 package com.bteam.badmintonmanagement.controller;
 
-import com.bteam.badmintonmanagement.dto.request.RequestForgotPassword;
-import com.bteam.badmintonmanagement.dto.request.RequestLogin;
-import com.bteam.badmintonmanagement.dto.request.RequestRegister;
-import com.bteam.badmintonmanagement.dto.request.RequestResetPassword;
+import com.bteam.badmintonmanagement.dto.request.ForgotPasswordRequest;
+import com.bteam.badmintonmanagement.dto.request.LoginRequest;
+import com.bteam.badmintonmanagement.dto.request.RegisterRequest;
+import com.bteam.badmintonmanagement.dto.request.ResetPasswordRequest;
 import com.bteam.badmintonmanagement.dto.response.ApiResponse;
-import com.bteam.badmintonmanagement.dto.response.ResponseLogin;
-import com.bteam.badmintonmanagement.dto.response.ResponseRegister;
+import com.bteam.badmintonmanagement.dto.response.LoginResponse;
+import com.bteam.badmintonmanagement.dto.response.RegisterResponse;
 import com.bteam.badmintonmanagement.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Null;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,13 +26,13 @@ public class AuthController {
     public ResponseEntity<ApiResponse<?>> register(
             @Valid
             @RequestBody
-            RequestRegister request)
+            RegisterRequest request)
     {
-        ResponseRegister responseRegister =
+        RegisterResponse responseRegister =
                 authService.register(request);
 
-        ApiResponse<ResponseRegister> response =
-                ApiResponse.<ResponseRegister>builder()
+        ApiResponse<RegisterResponse> response =
+                ApiResponse.<RegisterResponse>builder()
                         .success(true)
                         .message("Đăng ký thành công")
                         .data(responseRegister)
@@ -43,12 +44,15 @@ public class AuthController {
     public ResponseEntity<ApiResponse<?>> login (
             @Valid
             @RequestBody
-            RequestLogin request
+            LoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse
+
     )
     {
-        ResponseLogin respone=authService.login(request);
-        ApiResponse<ResponseLogin>
-                apiResponse=ApiResponse.<ResponseLogin>builder()
+        LoginResponse respone=authService.login(request,httpRequest,httpResponse);
+        ApiResponse<LoginResponse>
+                apiResponse=ApiResponse.<LoginResponse>builder()
                 .success(true)
                 .message("Đăng nhập thành công ")
                 .data(respone)
@@ -61,7 +65,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<?>> forgotPassword(
             @Valid
             @RequestBody
-            RequestForgotPassword request
+            ForgotPasswordRequest request
     )
     {
         authService.forgotPassword(request);
@@ -75,7 +79,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<?>> resetPassword(
             @Valid
             @RequestBody
-            RequestResetPassword request
+            ResetPasswordRequest request
     )
     {
         authService.resetPassword(request);

@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class RequestRegister {
+public class RegisterRequest {
     @NotBlank(message = "Họ tên không được để trống")
     private String fullName;
 

@@ -1,23 +1,29 @@
 package com.bteam.badmintonmanagement.service;
 
-import com.bteam.badmintonmanagement.dto.request.RequestForgotPassword;
-import com.bteam.badmintonmanagement.dto.request.RequestLogin;
-import com.bteam.badmintonmanagement.dto.request.RequestRegister;
-import com.bteam.badmintonmanagement.dto.request.RequestResetPassword;
-import com.bteam.badmintonmanagement.dto.response.ResponseLogin;
-import com.bteam.badmintonmanagement.dto.response.ResponseRegister;
+import com.bteam.badmintonmanagement.dto.request.ForgotPasswordRequest;
+import com.bteam.badmintonmanagement.dto.request.LoginRequest;
+import com.bteam.badmintonmanagement.dto.request.RegisterRequest;
+import com.bteam.badmintonmanagement.dto.request.ResetPasswordRequest;
+import com.bteam.badmintonmanagement.dto.response.LoginResponse;
+import com.bteam.badmintonmanagement.dto.response.RegisterResponse;
 import com.bteam.badmintonmanagement.entity.user.User;
 import com.bteam.badmintonmanagement.entity.user.UserRole;
 import com.bteam.badmintonmanagement.entity.user.UserStatus;
 import com.bteam.badmintonmanagement.exception.InvalidDataException;
 import com.bteam.badmintonmanagement.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -31,8 +37,10 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final SecureRandom secureRandom=new SecureRandom();
+    private final SecurityContextRepository securityContextRepository =
+            new HttpSessionSecurityContextRepository();
 
-    public ResponseRegister register(RequestRegister request)
+    public RegisterResponse register(RegisterRequest request)
     {
         String email=request.getEmail().trim().toLowerCase();
         String phoneNumber=request.getPhoneNumber().trim();
@@ -60,7 +68,7 @@ public class AuthService {
         User savedUser =
                 userRepository.save(user);
 
-        return ResponseRegister.builder()
+        return RegisterResponse.builder()
                 .id(savedUser.getId())
                 .fullName(savedUser.getFullName())
                 .phoneNumber(savedUser.getPhoneNumber())
@@ -70,11 +78,15 @@ public class AuthService {
                 .build();
     }
 
-    public ResponseLogin login(RequestLogin request)
+    public LoginResponse login(
+            LoginRequest request,
+            HttpServletRequest httpRequest,
+            HttpServletResponse httpResponse)
     {
         String login=request.getLogin().trim().toLowerCase();
+        Authentication authentication;
         try {
-            Authentication authentication =
+             authentication =
                     authenticationManager.authenticate(
                             new UsernamePasswordAuthenticationToken(
                                     login,
@@ -89,7 +101,6 @@ public class AuthService {
 
             throw new InvalidDataException("Tài khoản đã bị khóa");
         }
-
 
         User user;
 
@@ -110,7 +121,16 @@ public class AuthService {
                             )
                     );
         }
-        return ResponseLogin.builder()
+        SecurityContext context =
+                SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+        securityContextRepository.saveContext(
+                context,
+                httpRequest,
+                httpResponse
+        );
+        return LoginResponse.builder()
                 .id(user.getId())
                 .fullName(user.getFullName())
                 .email(user.getEmail())
@@ -119,7 +139,7 @@ public class AuthService {
                 .build();
     }
 
-    public void forgotPassword(RequestForgotPassword request)
+    public void forgotPassword(ForgotPasswordRequest request)
     {
         String email=request.getEmail().trim().toLowerCase();
         User user=userRepository.findByEmail(email)
@@ -136,7 +156,7 @@ public class AuthService {
         emailService.sendMailResetPasswordOtp(email,otp);
     }
 
-    public void resetPassword(RequestResetPassword request)
+    public void resetPassword(ResetPasswordRequest request)
     {
         String email=request.getEmail().trim().toLowerCase();
         User user=userRepository.findByEmail(email)

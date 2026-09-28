@@ -1,12 +1,11 @@
 package com.bteam.badmintonmanagement.config;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -33,11 +32,11 @@ public class SecurityConfig {
             "/auth/login",
             "/auth/forgot-password",
             "/auth/reset-password",
-            "/error"
+            "/error",
     };
 
     private static final String[] MANGAER_URLS={
-            // endpoint chỉ manager gọi
+            "/court/addCourt"
     };
 
 
@@ -48,6 +47,7 @@ public class SecurityConfig {
 
     private static final String[]  CUSTOMER_URLS= {
             // endpoint QUYỀN THẤP NHẤT LÀ CUSTOMER GỌI
+            "/court/allcourt"
     };
 
 
@@ -58,11 +58,6 @@ public class SecurityConfig {
     {
         http
                 .csrf(csrf->csrf.disable())
-
-                //Basic auth mỗi request phải có tk mk
-                .sessionManagement(session->
-                        session.sessionCreationPolicy( SessionCreationPolicy.STATELESS))
-
                 //Phân quyền
                 .authorizeHttpRequests(auth->auth
                         .requestMatchers(PUBLIC_URLS).permitAll()
@@ -70,8 +65,12 @@ public class SecurityConfig {
                         .requestMatchers(STAFF_URLS).hasAnyRole("MANAGER","STAFF")
                         .requestMatchers(CUSTOMER_URLS).hasAnyRole("MANAGER","STAFF","CUSTOMER")
                         .anyRequest().authenticated())
-
-                .httpBasic(Customizer.withDefaults());
+                .logout(logout -> logout
+                        .logoutUrl("/auth/logout")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            response.setStatus(HttpServletResponse.SC_OK);
+                        })
+                );
 
         return http.build();
     }

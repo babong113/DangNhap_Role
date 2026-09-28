@@ -37,4 +37,7 @@ public class User {
 
     @Column(name="reset_otp",nullable = true,length = 6)
     private String resetOtp;
+
+    @Column(name="is_online",nullable = false)
+    private boolean isOnline;
 }

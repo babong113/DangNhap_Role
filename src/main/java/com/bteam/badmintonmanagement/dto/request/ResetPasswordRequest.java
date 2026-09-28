@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RequestResetPassword {
+public class ResetPasswordRequest {
     @NotBlank(message = "email không được để trống")
     @Email(message = "email không đúng định dạng")
     private String email;

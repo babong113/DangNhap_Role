@@ -6,15 +6,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-@NoArgsConstructor
 @AllArgsConstructor
-public class ResponseRegister {
+@NoArgsConstructor
+@Builder
+public class LoginResponse {
+
     private Long id;
     private String fullName;
-    private String phoneNumber;
     private String email;
+    private String phoneNumber;
     private String role;
-    private String status;
-
 }
